@@ -4,262 +4,84 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Extrator TSE 2026</title>
-
 <style>
-body{
-  font-family:system-ui;
-  margin:0;
-  background:#f2f5f8;
-  color:#18212b
-}
-header{
-  background:#17365d;
-  color:#fff;
-  padding:20px
-}
-main{
-  max-width:900px;
-  margin:auto;
-  padding:14px
-}
-.card{
-  background:#fff;
-  padding:18px;
-  border-radius:16px;
-  margin:12px 0;
-  box-shadow:0 2px 10px #0001
-}
-button{
-  background:#1769aa;
-  color:#fff;
-  border:0;
-  border-radius:10px;
-  padding:13px 16px;
-  font-weight:700;
-  margin:4px;
-  cursor:pointer
-}
-button:active{
-  transform:scale(.98)
-}
-progress{
-  width:100%
-}
-.ok{
-  color:#087f23
-}
-.err{
-  color:#b00020
-}
-.info{
-  color:#1769aa
-}
-.zone{
-  margin-top:12px;
-  padding:12px;
-  background:#f5f7fa;
-  border-radius:10px
-}
+body{font-family:system-ui;margin:0;background:#f2f5f8;color:#18212b}
+header{background:#17365d;color:#fff;padding:20px}
+main{max-width:900px;margin:auto;padding:14px}
+.card{background:#fff;padding:18px;border-radius:16px;margin:12px 0;box-shadow:0 2px 10px #0001}
+button{background:#1769aa;color:#fff;border:0;border-radius:10px;padding:13px 16px;font-weight:700;margin:4px}
+progress{width:100%}.ok{color:#087f23}.err{color:#b00020}
 </style>
 </head>
-
 <body>
-
-<header>
-  <h2>🗳️ Extrator TSE 2026</h2>
-  <div>Camaçari • BA • 34134</div>
-</header>
-
+<header><h2>🗳️ Extrator TSE 2026</h2><div>Camaçari • BA • 34134</div></header>
 <main>
-
 <div class="card">
-  <h3>📡 Conexão</h3>
-
-  <button onclick="health()">
-    Testar conexão com TSE
-  </button>
-
-  <span id="health"></span>
+<h3>📡 Conexão</h3>
+<button onclick="health()">Testar conexão com TSE</button>
+<span id="health"></span>
 </div>
-
-
 <div class="card">
-
-  <h3>🔎 Consulta</h3>
-
-  <p><b>Município:</b> Camaçari (34134)</p>
-  <p><b>Zonas:</b> 0170 e 0171</p>
-  <p><b>Pleito:</b> 3220</p>
-
-  <button onclick="sections()">
-    Carregar seções
-  </button>
-
-  <div id="count"></div>
-
+<h3>🔎 Consulta</h3>
+<p><b>Município:</b> Camaçari (34134)</p>
+<p><b>Zonas:</b> 0170 e 0171</p>
+<p><b>Pleito:</b> 3220</p>
+<button onclick="sections()">Carregar seções</button>
+<div id="count"></div>
 </div>
-
-
 <div class="card">
-
-  <h3>⬇️ Download das BUs</h3>
-
-  <p class="info">
-    Para evitar erro no celular, as zonas serão baixadas separadamente.
-  </p>
-
-  <div class="zone">
-
-    <b>Zona 0170</b><br>
-
-    <button onclick="downloadZone('0170')">
-      ⬇️ BAIXAR BUs — ZONA 0170
-    </button>
-
-  </div>
-
-
-  <div class="zone">
-
-    <b>Zona 0171</b><br>
-
-    <button onclick="downloadZone('0171')">
-      ⬇️ BAIXAR BUs — ZONA 0171
-    </button>
-
-  </div>
-
-
-  <div class="zone">
-
-    <b>As duas zonas</b><br>
-
-    <button onclick="downloadBoth()">
-      ⬇️ BAIXAR 0170 + 0171
-    </button>
-
-  </div>
-
-
-  <progress id="p" value="0" max="1"></progress>
-
-  <pre id="log"></pre>
-
+<h3>⬇️ Download das BUs</h3>
+<label><b>Quantidade de BUs:</b></label>
+<select id="limite">
+<option value="10">10 BUs</option>
+<option value="25" selected>25 BUs</option>
+<option value="50">50 BUs</option>
+<option value="100">100 BUs</option>
+<option value="200">200 BUs</option>
+<option value="0">Todas as BUs</option>
+</select>
+<button onclick="batch()">BAIXAR BUs SELECIONADAS</button>
+<progress id="p" value="0" max="1"></progress>
+<pre id="log"></pre>
 </div>
-
 </main>
-
-
 <script>
-
 async function health(){
-
-  try{
-
-    const r = await fetch('/health');
-
-    if(!r.ok)
-      throw new Error('Servidor indisponível');
-
-    const x = await r.json();
-
-    document.getElementById('health').innerHTML =
-      '<span class="ok"> ✓ TSE conectado</span>';
-
-  }catch(e){
-
-    document.getElementById('health').innerHTML =
-      '<span class="err"> ✗ '+e.message+'</span>';
-
-  }
-
+ try{
+  const r=await fetch('/health');
+  const x=await r.json();
+  document.getElementById('health').innerHTML='<span class="ok"> ✓ TSE conectado</span>';
+ }catch(e){
+  document.getElementById('health').innerHTML='<span class="err"> ✗ '+e.message+'</span>';
+ }
 }
-
-
 async function sections(){
-
-  document.getElementById('log').textContent =
-    'Consultando seções no TSE...';
-
-  try{
-
-    const r = await fetch(
-      '/api/sections/ba/34134?zones=0170,0171&pleito=003220'
-    );
-
-    if(!r.ok)
-      throw new Error(await r.text());
-
-    const x = await r.json();
-
-    document.getElementById('count').innerHTML =
-      '<b>'+x.total+'</b> seções encontradas.';
-
-    document.getElementById('log').textContent =
-      '✓ Seções carregadas.';
-
-  }catch(e){
-
-    document.getElementById('log').textContent =
-      'ERRO: '+e.message;
-
-  }
-
+ try{
+  const r=await fetch('/api/sections/ba/34134?zones=0170,0171&pleito=003220');
+  const x=await r.json();
+  document.getElementById('count').innerHTML='<b>'+x.total+'</b> seções encontradas.';
+  document.getElementById('log').textContent='Seções carregadas. Pronto para baixar.';
+ }catch(e){
+  document.getElementById('log').textContent='ERRO: '+e.message;
+ }
 }
-
-
-/*
-  DOWNLOAD DIRETO
-
-  Em vez de usar:
-  fetch → blob → memória do celular
-
-  usamos o próprio navegador para fazer
-  o download do arquivo.
-*/
-
-function downloadZone(zona){
-
-  const url =
-    '/api/download-batch/ba/34134' +
-    '?zones=' + zona +
-    '&pleito=003220';
-
-  document.getElementById('log').textContent =
-    'Iniciando download da Zona '+zona+'...\n' +
-    'Aguarde o navegador concluir o download.';
-
-  const a = document.createElement('a');
-
-  a.href = url;
-
-  a.download =
-    'BUs_Camacari_2026_Zona_'+zona+'.zip';
-
-  document.body.appendChild(a);
-
+async function batch(){
+ document.getElementById('log').textContent='Consultando TSE e montando o ZIP das BUs selecionadas...\nAguarde.';
+ try{
+  const limite=document.getElementById('limite').value;
+  const r=await fetch(`/api/download-batch/ba/34134?zones=0170,0171&pleito=003220&limite=${limite}`);
+  if(!r.ok) throw new Error(await r.text());
+  const blob=await r.blob();
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`BUs_Camacari_2026_${limite||'todas'}.zip`;
   a.click();
-
-  a.remove();
-
+  document.getElementById('log').textContent='✓ ZIP gerado com sucesso.';
+ }catch(e){
+  document.getElementById('log').textContent='ERRO: '+e.message;
+ }
 }
-
-
-function downloadBoth(){
-
-  document.getElementById('log').textContent =
-    'Primeiro será baixada a Zona 0170.\n' +
-    'Depois, baixe a Zona 0171 pelo botão correspondente.\n\n' +
-    'Não feche a página durante o download.';
-
-  downloadZone('0170');
-
-}
-
-
 health();
-
 </script>
-
 </body>
 </html>
